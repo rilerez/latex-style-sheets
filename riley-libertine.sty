@@ -1,0 +1,17 @@
+\ProvidesPackage{riley-libertine}
+% will this make ugly math commands
+%\usepackage{euler}
+%fontspec
+\usepackage{fontspec}
+\setmainfont[Ligatures={Common,Required,TeX},Numbers=OldStyle]{Linux Libertine O}
+\setsansfont[Numbers=OldStyle]{Linux Biolinum O}
+\setmonofont{Inconsolata}
+
+% koma
+\setkomafont{section}{\LARGE\normalfont\sffamily\color[gray]{.32}}
+\setkomafont{subsection}{\large\normalfont\sffamily\color[gray]{.2}}
+\setkomafont{subsubsection}{\big\normalfont\sffamily\color[gray]{.24}}
+\usepackage{riley-euler}
+
+
+\renewcommand{\labelitemi}{\color[gray]{.3}\textbullet}
