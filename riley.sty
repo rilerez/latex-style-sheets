@@ -1,19 +1,18 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{riley}
 \frenchspacing
-\RequirePackage{amsmath, amssymb, url, microtype,xcolor}
+\RequirePackage{amssymb, url, microtype,xcolor}
 \usepackage{mathtools}
 
 \usepackage{mathdots}
-\usepackage[amsmath,thmmarks]{ntheorem}
 \usepackage{thmtools}%for nameref to work right
+\usepackage[thmmarks,amsmath]{ntheorem}
 \usepackage{nameref}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage[nameinlink]{cleveref}
 \renewcommand{\ref}{\hyperref}
 \renewcommand{\namecref}[1]{\cref{#1}~(\nameref{#1})}
 \newcommand{\Namecref}[1]{\Cref{#1}~(\nameref{#1})}
-
 
 % was math italic correction fixed in lualatex?
 %https://tex.stackexchange.com/questions/31438/how-can-i-enable-italic-correction-for-luatex
@@ -26,17 +25,43 @@
 %\setmonofont{Inconsolata}
 
 
+\newfontfamily\coloremojifont{Noto Color Emoji}[Renderer=HarfBuzz] % It is sad without this
+\newfontfamily\bwemojifont{Noto Emoji Light}[Renderer=HarfBuzz] % It is sad without this
+
+% my fav leaves in noto emoji light
+%🍂🍃🍁☘️🍀 💐🌸🪷🌹🌷🫒🍇🐾🪶🥀🪻
+\newcommand{\leaf}{{\bwemojifont 🍂}}
+\def\thmding{{\scriptsize\color[gray]{.2}\leaf}}
+
 % koma
-\setkomafont{section}{\LARGE\normalfont\sffamily\color[gray]{.3}}
+\setkomafont{section}{\LARGE\normalfont\sffamily\color[gray]{.38}}
 \setkomafont{subsection}{\large\normalfont\sffamily\color[gray]{.1}}
 \setkomafont{subsubsection}{\big\normalfont\sffamily\color[gray]{.1}}
 
 % theorem stuff
 \newcounter{thms}
-
+\theoremseparator{\; \thmding}
+\newcommand{\theoremheadercolor}{\color[gray]{.2}}
 \theorembodyfont{\normalfont}
-\theoremheaderfont{\normalfont\sffamily}
-\newtheorem{defn}[thms]{Definition}
+\theoremheaderfont{\normalfont\sffamily\theoremheadercolor}
+{
+\theorempreskip{\glueexpr\the\dimexpr1\baselineskip plus 2ex minus 2ex\relax}
+\theorempostskip{\glueexpr\the\dimexpr1.5\baselineskip plus 2ex minus 2ex\relax}
+\theoremindent1.5em\relax
+%TODO: break after title when line won't fit (cf quote macro in TeXBook)
+\theoremprework{\advance\linewidth by-1.5em}
+\newtheorem{defn@}[thms]{Definition}
+}
+\crefname{defn@}{Definition}{Definitions}
+% how to patch directly
+\newenvironment{defn}[1][]{%https://tex.stackexchange.com/questions/263733/whats-the-best-practice-way-to-test-whether-parameter-is-empty
+    \if\relax\detokenize{#1}\relax%
+      \begin{defn@}%
+    \else%
+      \begin{defn@}[#1]%
+      \def\@currentlabelname{#1}%
+    \fi%
+    }{\end{defn@}}
 \newtheorem{defn?}[thms]{Definition attempt}
 \newtheorem{defcat}[thms]{Category definition}
 \newtheorem{example}[thms]{Example}
@@ -44,29 +69,33 @@
 
 \newtheorem{counterex}[thms]{Counter example}
 
+\theoremseparator{\enspace \thmding}
 \theorembodyfont{\itshape}
 \newtheorem{axiom}[thms]{Axiom}
-\newtheorem{theorem}[thms]{Theorem}
+\newtheorem{theorem@}[thms]{Theorem}
 \newtheorem{lemma}[thms]{Lemma}
 \newtheorem{cor}[thms]{Corollary}
 \newtheorem{note}[thms]{Note}
 
-% proof environment
-\newcommand{\openbox}{\leavevmode
-  \hbox to.77778em{%
-  \hfil\vrule
-  \vbox to.675em{\hrule width.6em\vfil\hrule}%
-  \vrule\hfil}}
-\gdef\proofSymbol{\openbox}
-\newcommand{\proofname}{Proof.}
-\newcounter{proof}\newcounter{currproofctr}\newcounter{endproofctr}%
-\newenvironment{proof}[1][\proofname]{
-  \th@nonumberplain
-  \def\theorem@headerfont{\sffamily}%
-  \normalfont
-  \theoremsymbol{\ensuremath{_\blacksquare}}
-  \@thm{proof}{proof}{#1}}%
-  {\@endtheorem}
+
+\newenvironment{theorem}[1][]{%https://tex.stackexchange.com/questions/263733/whats-the-best-practice-way-to-test-whether-parameter-is-empty
+    \if\relax\detokenize{#1}\relax%
+      \begin{theorem@}%
+    \else%
+      \begin{theorem@}[#1]%
+        \def\@currentlabelname{#1}%
+    \fi%
+    }{\end{theorem@}}
+
+\theorembodyfont{\normalfont}
+{
+  \theoremstyle{nonumberplain}
+  \theoremindent0em
+  %\theoremsymbol{\hbox to0pt{\quad\Box}}
+  \theoremsymbol{\quad\Box}
+  \theoremseparator{\; \cdot}
+  \newtheorem{proof}{Proof}
+}
 
 
 \newcommand{\ie}{\emph{i.e.\@}}
@@ -76,44 +105,43 @@
 \newcommand{\auto}{auto}
 \providecommand{\delmiddle}{}
 % why did i use this?
-%\def\parseit#1\ldel#2\rdel#3{#1\ldel#2\rdel#3}
+% \def\parseit#1\ldel#2\rdel#3{#1\ldel#2\rdel#3}
 \gdef\@@withdelim[#1]#2#3#4{
   {
-  \ifx#1\auto\@withdelim#2#3#4
-  \else
-  \def\delmiddle{\mathrel#1}
-  \def\ldel{\mathopen#1#2}
-  \def\rdel{\mathclose#1#3}
-   #4
-  \fi
+    \ifx#1\auto\@withdelim#2#3#4
+    \else
+      \def\delmiddle{\mathrel#1}
+      \def\ldel{\mathopen{#1#2}}
+      \def\rdel{\mathclose{#1#3}}
+      #4
+    \fi
   }
 }
 \gdef\@withdelim#1#2#3{
   {
-  \let\delmiddle\middle
-  \def\ldel{\left#1}
-  \def\rdel{\right#2}
-  #3
+    \let\delmiddle\middle
+    \def\ldel{\left#1}
+      \def\rdel{\right#2}
+    #3
   }
 }
 \def\withdelim{\@ifnextchar[\@@withdelim\@withdelim}
 \newcommand{\given}{
-  %\delmiddle|\allowbreak
+  % \delmiddle|\allowbreak
   \delmiddle|\allowbreak
 }
 
 % \def\DefPairX#1[#2]#3#4#5{
-%   \expandafter\def\csname#1all\endcsname[##1]##2##3##4##5{
-%     \expandafter\withdelim[##1]#3#4{#5}
-%   }
+% \expandafter\def\csname#1all\endcsname[##1]##2##3##4##5{
+% \expandafter\withdelim[##1]#3#4{#5}
+% }
 %   \edef#1[##1]##2{
-%     \ifcase#2\or
+%   \ifcase#2\or
 %     \csname#1all\endcsname #
 %   }
-% }
+%   }
 
-%\DefRileyPairX{inner}[2]\langle\rangle{\ldel #1,#2 \rdel}
-\newcommand{\inner}[3][\auto]{\withdelim[#1]\langle\rangle{\ldel #2,#3\rdel}}
+%     \newcommand{\inner}[3][\auto]{\withdelim[#1]\langle\rangle{\ldel #2,#3\rdel}}
 \newcommand*{\DefRileyPair}[3]{
   \global\expandafter\def\csname @@\string#1\endcsname[##1]##2{
     \withdelim[##1]{#2}{#3}{{\ldel##2\rdel}} % the {#2} is necessary for proper nesting
@@ -127,17 +155,22 @@
 \DefRileyPair{\norm}{\lVert}{\rVert}
 \DefRileyPair{\abs}{\lvert}{\rvert}
 \DefRileyPair{\paren}{(}{)}
+\DefRileyPair{\bracket}{[}{]}
 \DefRileyPair{\set}{\{}{\}}
+\newcommand{\inner}[2]{\withdelim\langle\rangle{\ldel #1,#2 \rdel}}
 
 
-
-\providecommand{\blank}{\mathop{\Box}}%{\,\rule{1em}{.4pt}\,}
+\providecommand{\blankbox}{{\withcolor[gray]{{\Box}}}} %{\,\rule{1em}{.4pt}\,}
+\providecommand{\blank}{\blankbox} %{\,\rule{1em}{.4pt}\,}
 \providecommand{\Z}{\mathbb{Z}}
 \providecommand{\N}{\mathbb{N}}
 \providecommand{\R}{\mathbb{R}}
 \providecommand{\complex}{\mathbb{C}}
 \providecommand{\Q}{\mathbb{Q}}
 \providecommand{\id}{\mathrm{id}}
+
+
+\DeclareMathOperator*{\argmax}{argmax}
 
 \DeclareMathOperator*{\Span}{span}
 \DeclareMathOperator{\End}{End}
@@ -153,12 +186,12 @@
 \newcommand{\interior}[1]{{\kern0pt#1}^{\mathrm{o}}}
 \newcommand{\closure}{\overline}
 
-%light bullets
+% light bullets
 \let\oldlabelitemi\labelitemi
 \renewcommand{\labelitemi}{\color[gray]{.3}\oldlabelitemi}
 
 \usepackage{cancel}
-\definecolor{cancel-default}{gray}{.5}
+\definecolor{cancel-default}{gray}{.5} % deprecated. cancel already does this
 \newcommand\Ccancel[2][cancel-default]{\renewcommand\CancelColor{\color{#1}}\cancel{#2}}
 \newcommand{\withcolor}[2][gray]{\colorlet{saved}{.}\color{#1}#2\color{saved}}
 \newcommand{\grayunderbrace}[3][gray]{\colorlet{saved}{.}\color{#1}\underbrace{\color{saved}#2}_{\color{saved}#3}\color{saved}}
@@ -170,28 +203,30 @@
 \newcommand{\prob}{\mathcal{P}}
 \DeclareMathOperator{\diam}{diam}
 
-\usepackage{bbm}
-\newcommand{\indicator}[1]{{\mathbbm{1}}_{#1}}
-\newcommand{\character}{\indicator}
-\usepackage{xfrac}
-\newcommand{\integrable}{\mathcal{L}}
+%\usepackage{xfrac}
 
 \let\blackprod\prod
 \let\blackcoprod\coprod
 \let\blacksum\sum
 
-\definecolor{sum-color}{gray}{0}
+\let\blackint\int
+
+\definecolor{sum-color}{gray}{.2}
 \definecolor{product-color}{gray}{.25}
+\definecolor{int-color}{gray}{.25}
 
 \DeclareMathOperator*{\graysum}{{\color{sum-color}\blacksum}}
 \DeclareMathOperator*{\grayprod}{{\color{product-color}\blackprod}}
 \DeclareMathOperator*{\graycoprod}{{\color{product-color}\blackcoprod}}
+\DeclareMathOperator*{\grayint}{{\color{int-color}\blackint}}
 \renewcommand{\sum}{\graysum}
 \renewcommand{\prod}{\grayprod}
 \renewcommand{\coprod}{\graycoprod}
+\renewcommand{\int}{\grayint}
 
 \newcommand{\niton}{\not\kern1pt\ni}
-\DeclareMathOperator{\image}{Im}
+\DeclareMathOperator{\image}{im}
+\DeclareMathOperator{\codomain}{Codomain}
 
 % useful for talking about monotone classes and dynkin systems
 \DeclareMathOperator*{\upunion}{\mathchoice{\displaystyle\bigcup\!\big\Uparrow\!}{\textstyle\bigcup\!\!\Uparrow\!}{\scriptstyle\bigcup\uparrow}{\scriptscriptstyle\bigcup\uparrow}}
@@ -200,5 +235,28 @@
 \newcommand{\conj}[1]{\overline{#1}}
 \newcommand{\adjoint}[1]{{#1}^*}
 
-\let\oldepsilon\epsilon
-\def\epsilon{\varepsilon}
+% \let\oldepsilon\epsilon
+% \def\epsilon{\varepsilon}
+
+
+\def\euleritcorrect{}
+\def\eulit{\euleritcorrect}
+\def\eit/{\euleritcorrect}
+
+% \def\@@divides[#1]{\,#1\vert\,}
+% \def\@divides{\,|\,}
+% \def\divides{\@ifnextchar[\@@divides\@divides}
+% will fail if the next token is an unrelated [ :C
+\newcommand{\divides}[1][  ]{\,#1\vert\,}
+
+
+% margin stuff
+% why won't this work in my files :C
+\SetProtrusion[load=default]{font=*}{%
+  {„}={1000,1000},
+  {‟}={1000,1000},
+  {.}={,1000}, {,}={,1000}, {-} = {,1000} , {;}={,900}, {:}={,900}, {?}={,400}, {\textquotedblleft} = {900,900}, {\textquotedblright}={900,900}, {\textquoteleft} = {1000,},{\textquoteright}={,1000} }
+
+
+% TODO: make big integrals gray
+% TODO: make big delimiters gray
